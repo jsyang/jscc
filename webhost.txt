@@ -1,0 +1,69 @@
+Subscription To	Terms	Amount
+Free Hosting Plan	$0.00 USD for each month	$0.00 USD
+
+Control Panel 
+Control panel user name	fees0_2174280
+Control panel password	123456
+Control panel URL	http://cpanel.0fees.net
+Files and FTP Settings
+FTP user name	fees0_2174280
+FTP password	123456
+FTP host name	ftp.0fees.net 
+File system path	/home/vol1/0fees.net/fees0_2174280/htdocs
+MySQL Settings
+MySQL user	fees0_2174280
+MySQL password	123456
+MySQL host	sql203.0fees.net
+MySQL port	3306
+Domain name
+Your domain name	http://beb.0fees.net
+or
+http://www.beb.0fees.net
+Save your settings
+Save a copy to your computer	Download my account settings
+
+
+------------------------------
+
+Account Details Overview
+
+
+Thanks for choosing www.000webhost.com as your free web hosting provider! Our members area allows you to manage your domains, create new accounts, get file upload details and request help.
+
+You can access members area anytime at:
+http://members.000webhost.com/ Don't forget to bookmark this link! 
+
+Login Email: mie_686@yahoo.com
+Password: ****** (hidden)
+
+[ Enter Control Panel ]
+
+This is a short overview of your account details. To learn more about each feature browse icons inside control panel.
+
+Don't know how to get started? Check "Getting Started" information.
+
+ Nameserver details (only if you host your own domain)ns01.000webhost.com	66.197.153.229
+ns02.000webhost.com	66.197.153.230
+
+
+ Website DetailsAccess your website at	http://jscc.net76.net 
+Access your website with www.	http://www.jscc.net76.net 
+Website IP address	64.191.56.133
+Server name	server14.000webhost.com
+
+
+ File Upload Details (learn more)FTP host name	jscc.net76.net
+FTP user name	a1071306
+FTP password	*use your password*
+File system path	/home/a1071306
+Folder to upload files	public_html
+Forgot FTP password?	Change account password
+Recommended FTP clients	SmartFTP or FileZilla
+Web File Manager	Click here
+
+
+ Website Builder Details (learn more)Select website template at	http://builder.000webhost.com
+Login domain	www.jscc.net76.net
+Username	a1071306
+Password	*use your password*
+Once template was selected, go to	http://jscc.net76.net/admin

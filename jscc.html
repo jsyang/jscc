@@ -1,0 +1,1309 @@
+<html><link rel="stylesheet" type="text/css" href="style.txt">
+<script type="text/javascript" src="soundmanager2.js"></script><body bgcolor=0>
+
+<!-- *********************************************** -->
+<!-- * JS Command & Conquer (2008)                 * -->
+<!-- * Jim Yang (mie_686@yahoo.com)                * -->
+<!-- * For more info: http://geocities.com/mie_686 * -->
+<!-- *,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,* -->
+
+<script>
+
+// JSCC (Javascript C&C)
+// Jim Yang - mie_686@yahoo.com
+
+// ##################### SOUND MANAGER STUFF ###################
+
+
+soundManager.url = './sm2/'; 				// directory where SM2 .SWFs live
+
+soundManager.debugMode = false;
+
+soundManager.onload = function() {
+soundManager.createSound('aoi','./s/aoi.mp3');
+soundManager.createSound('ccthang','./s/ccthang.mp3');
+//soundManager.createSound('80mx226m','./s/80mx226m.mp3');
+
+
+soundManager.createSound('newopt1','./s/newopt1.mp3');
+soundManager.createSound('affirm1','./s/affirm1.mp3');
+soundManager.createSound('await1','./s/await1.mp3');
+soundManager.createSound('constru2','./s/constru2.mp3');
+soundManager.createSound('report1','./s/report1.mp3');
+soundManager.createSound('ackno','./s/ackno.mp3');
+soundManager.createSound('vehic1','./s/vehic1.mp3');
+soundManager.createSound('yessir1','./s/yessir1.mp3');
+soundManager.createSound('constru1','./s/constru1.mp3');
+soundManager.createSound('bldg1','./s/bldg1.mp3');
+soundManager.createSound('bldging1','./s/bldging1.mp3');
+soundManager.createSound('deploy1','./s/deploy1.mp3');
+soundManager.createSound('xplosml2','./s/xplosml2.mp3');
+soundManager.createSound('crumble','./s/crumble.mp3');
+soundManager.createSound('nukemisl','./s/nukemisl.mp3');
+soundManager.createSound('nukexplo','./s/nukexplo.mp3');
+soundManager.createSound('nuke1','./s/nuke1.mp3');
+soundManager.createSound('nukavail','./s/nukavail.mp3');
+soundManager.createSound('select1','./s/select1.mp3');
+soundManager.createSound('xplobig4','./s/xplobig4.mp3');
+
+//soundManager.play('ccthang');
+
+};
+
+
+
+
+
+
+
+// ########################### SOUND FUNCTIONS #####################
+
+snd_v_select=function(v){switch((Math.random()*3)>>0){			// ---------- sound: vehicle selected --------------
+		case 0:soundManager.play('await1');break;
+		case 1:soundManager.play('vehic1');break;
+		case 2:soundManager.play('report1');break;
+}};
+
+snd_v_execute=function(v){switch((Math.random()*3)>>0){			// ---------- sound: vehicle received orders --------------
+		case 0:soundManager.play('affirm1');break;
+		case 1:soundManager.play('ackno');break;
+		case 2:soundManager.play('yessir1');break;
+}};
+
+snd_fx=function(n){switch(n){						// ---------- general sound effects --------------
+		case 0:soundManager.play('constru2');break;
+		case 1:soundManager.play('xplosml2');break;
+		case 2:soundManager.play('crumble');break;
+		case 3:soundManager.play('nukemisl');break;
+		case 4:soundManager.play('nukexplo');break;
+		case 5:soundManager.play('xplobig4');break;
+}};
+
+snd_eva=function(n){switch(n){						// ---------- EVA speech lines --------------
+		case 0:soundManager.play('newopt1');break;
+		case 1:soundManager.play('constru1');break;
+		case 2:soundManager.play('bldg1');break;
+		case 3:soundManager.play('bldging1');break;
+		case 4:soundManager.play('deploy1');break;
+		case 5:soundManager.play('nuke1');break;
+		case 6:soundManager.play('nukavail');break;
+		case 7:soundManager.play('select1');break;
+}};
+
+
+
+// ########################### GUI and MOUSE STUFF ################
+
+mouseX=0;mouseY=0;mouseHasClicked=0;placementFlag=0;				// placement flag - is okay to build here? (0-OK,1-NO GO)
+targetX=0;targetY=0;								// targeting coords for weapons
+pGrid=[];	// passability change array for worldpass[]
+mDelay=4;	// mouse click detection delay
+mouseMode=0;	// mouse mode
+			// 0 - unit selection
+			// 1 - order unit(s)
+			// 2 - structure placement
+			// 3 - sell mode
+			// 4 - atom bomb target select mode
+			// 5 - ion cannon target select mode
+			// 6 - airstrike target select mode
+
+			// 9 - test mode (explosions!)
+lastkey=0;
+
+w=function(a){document.write(a);};
+o=function(a){return document.getElementById(a);};
+toGrid=function(a){ return a-(a%24); };						// ------ calculate to grid -------
+to3dgt=function(a){ a+=""; while(a.length-3<0) a="0"+a; return a; };		// ------ return 3 digit number -------
+getm=function(e) {mouseX=e.pageX;mouseY=e.pageY;};				// ------ get mouse coords --------
+getkb=function(e) {lastkey=e.keyCode;if(lastkey==16) mouseMode=9;};		// ------ get key press --------
+
+mClick=function(){if(!mouseHasClicked){						// ------ clicked on map --------
+	mouseHasClicked=mDelay;
+	switch(mouseMode){
+	case 0: if(selectStruct) hideSelectionBoxes(); break;
+	case 1:
+		var a1=mouseX,b1=mouseY;
+		for(i=selectlist.length;i-->0;){				// move/attack command
+			umx[selectlist[i]]=toGrid(a1);
+			umy[selectlist[i]]=toGrid(b1);
+			snd_v_execute(0);					// sound: "affirmative"
+		}
+	break;
+	case 2:
+		if(placementFlag) return snd_eva(4);
+		var a1=mouseX,b1=mouseY;
+		mouseMode=0;
+		hideBuildGrid();
+		addAnim(buildStructType+2,[toGrid(a1),toGrid(b1)],null);	// place it
+		snd_fx(0);							// sound: construction noises
+		var a=findStructure([0,21]);if(a.length>0) bldt[a[0]]=(!a[1])?19:20;
+		buildStructType=-1;						// reset build type
+		hideIconOverlays();
+	break;
+	case 4:
+		targetX=mouseX;targetY=mouseY;
+		var a=findStructure([17,39]);
+		if(a.length>0) bldt[a[0]]=(a[1]==17)?59:60;
+		mouseMode=0;
+	break;
+	case 9:
+		var a1=mouseX,b1=mouseY;
+		damageRadius([10,10,10, 10,10,10, 10,10,10],3,a1,b1);
+		addAnim(20,[mouseX,mouseY],null);
+		snd_fx(1);							// sound: artillery explosion
+	break;
+	}
+
+}};
+
+document.onmousemove=getm;
+document.onclick=mClick;
+document.onkeydown=getkb;
+document.onkeyup=function(){lastkey=0;mouseMode=0;};
+
+
+
+// ################################### GFX STUFF #############################
+
+// ------------ structure setup ---------------------
+maxbld=150+1;		// from 1 to 50
+bldx=new Array(maxbld);	// current x
+bldy=new Array(maxbld);	// current y
+bldfr=new Array(maxbld);// current frame
+bldh=new Array(maxbld);	// health
+bldt=new Array(maxbld);	// structure type
+			// 0 - FACT
+			// 1 - NUKE
+			// 2 - PYLE
+			// 3 - NUK2
+			// 4 - PROC
+			// 5 - FIX
+			// 6 - GTWR
+			// 7 - HPAD
+			// 8 - HQ
+			// 9 - WEAP
+			// 10 - SILO
+			// 11 - EYE
+			// 12 - ATWR
+			// 13 - AFLD
+			// 14 - HAND
+			// 15 - OBLI
+			// 16 - SAM
+			// 17 - TMPL
+			// 18 - GUN
+			// 19 - FACT : working
+			// 20 - FACT damaged : working
+			// 21 - FACT damaged
+			// 22 - FACT ruined
+			// 23 - NUKE damaged
+			// 24 - PYLE damaged
+			// 25 - NUK2 damaged
+			// 26 - PROC damaged
+			// 27 - FIX damaged
+			// 28 - GTWR damaged
+			// 29 - HPAD damaged
+			// 30 - HQ damaged
+			// 31 - WEAP damaged
+			// 32 - SILO damaged
+			// 33 - EYE damaged
+			// 34 - ATWR damaged
+			// 35 - AFLD damaged
+			// 36 - HAND damaged
+			// 37 - OBLI damaged
+			// 38 - SAM damaged
+			// 39 - TMPL damaged
+			// 40 - GUN damaged
+
+			// 41 - NUKE ruined
+			// 42 - PYLE ruined
+			// 43 - NUK2 ruined
+			// 44 - PROC ruined
+			// 45 - FIX ruined
+			// 46 - GTWR ruined
+			// 47 - HPAD ruined
+			// 48 - HQ ruined
+			// 49 - WEAP ruined
+			// 50 - SILO ruined
+			// 51 - EYE ruined
+			// 52 - ATWR ruined
+			// 53 - AFLD ruined
+			// 54 - HAND ruined
+			// 55 - OBLI ruined
+			// 56 - SAM ruined
+			// 57 - TMPL ruined
+			// 58 - GUN ruined (placeholder, doesn't exist)
+
+			// 59 - TMPL : launching nuke
+			// 60 - TMPL damaged : launching nuke
+
+
+			// initialize, set all = -1, make spans for the images
+			for(a=maxbld;a-->0;){
+				bldx[a]=-1;bldy[a]=-1;
+				bldfr[a]=0;bldh[a]=-1;bldt[a]=-1;
+				w("<img id=bldbib"+a+" class=bibs><img id=bld1h"+a+" class=bs height=4 src=./i/health0.png><img id=bld2h"+a+" class=bs height=2 src=./i/health3.png><img id=bldsel"+a+" class=bs src='./i/sel22.png'><img id=bld"+a+" class=bs onclick='mouseClickedStruct("+a+")'>");
+			}
+
+
+
+// ------------- unit setup --------------------
+maxu=10;
+ux=new Array(maxu);	// current x
+uy=new Array(maxu);	// current y
+umx=new Array(maxu);	// move-to x
+umy=new Array(maxu);	// move-to y
+
+ud=new Array(maxu);	// direction
+utd=new Array(maxu);	// turn direction (-1 or 1)
+uTd=new Array(maxu);	// Turret direction
+uTtd=new Array(maxu);	// Turret turn direction (-1 or 1)
+
+
+ut=new Array(maxu);	// unit type
+			// 0 - MCV
+			// 1 - MCV deploy mode
+
+uh=new Array(maxu);	// unit health
+uo=new Array(maxu);	// unit orders
+			// 0 - move
+			// 1 - deploy
+			// 2 - attack
+			// 3 - guard
+
+			// initialize, set all = -1, make spans for the images
+			for(a=maxu;a-->0;){
+				ux[a]=-1;uy[a]=-1;
+				umx[a]=-1;umy[a]=-1;
+				ud[a]=-1;utd[a]=0;
+				uTd[a]=0;uTtd[a]=0;
+				ut[a]=-1;uh[a]=-1;
+				uo[a]=0;
+				w("<img id=u1h"+a+" class=bs height=4 src=./i/health0.png><img id=u2h"+a+" class=bs height=2 src=./i/health3.png><img id=u"+a+" class=us onclick='mouseClickedUnit("+a+")'><img id=uT"+a+" class=us onclick='mouseClickedUnit("+a+")'><img id=usel"+a+" class=bs src='./i/sel22.png'>");
+			}
+
+// ------------- infantry setup --------------------
+maxinf=500;
+infx=new Array(maxu);	// current x
+infy=new Array(maxu);	// current y
+infmx=new Array(maxu);	// move-to x
+infmy=new Array(maxu);	// move-to y
+
+infd=new Array(maxu);	// direction
+inft=new Array(maxu);	// unit type
+			// 0 - MCV
+			// 1 - MCV deploy mode
+
+infh=new Array(maxu);	// unit health
+info=new Array(maxu);	// unit orders
+			// 0 - move
+			// 1 - deploy
+			// 2 - attack
+			// 3 - guard
+
+			// initialize, set all = -1, make spans for the images
+			for(a=maxinf;a-->0;){
+				infx[a]=-1;infy[a]=-1;
+				infmx[a]=-1;infmy[a]=-1;
+				infd[a]=-1;inft[a]=-1;infh[a]=-1;
+				info[a]=0;
+				w("<img id=inf1h"+a+" class=bs height=4 src=./i/health0.png><img id=inf2h"+a+" class=bs height=2 src=./i/health3.png><img id=inf"+a+" class=us onclick='mouseClickedInf("+a+")'><img id=infsel"+a+" class=bs src='./i/sel11.png'>");
+			}
+
+
+// ----------- animations setup -------------
+maxani=200+1;
+ani=new Array(maxani);		// animation type
+anix=new Array(maxani);		// x
+aniy=new Array(maxani);		// y
+animx=new Array(maxani);	// moveto x
+animy=new Array(maxani);	// moveto y
+anil=new Array(maxani);		// how many times to loop until it's gone
+anifr=new Array(maxani);	// current frame
+				// types:
+				// 0 - unloading MCV
+
+			// initialize, set all = -1 (no animation)
+			for(a=maxani;a-->0;){
+				ani[a]=0;anifr[a]=0;anil[a]=0;
+				anix[a]=-1;aniy[a]=-1;
+				animx[a]=-1;animy[a]=-1;
+				w("<img id=an"+a+" class=as>");
+			}
+
+
+
+// -------------- world setup ------------
+w("<img class=world src=./i/map01.png>");			// world is a single image (faster than grid)
+// ---- code from map editor here ----
+worldw=31;worldh=31;
+worldpass=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1];
+
+
+worldbld=[];worldu=[];						// matrix of building and unit locations
+for(i=worldw*worldh;i-->0;){worldbld.push(0);worldu.push(0);}	// initialize with all 0
+
+
+// -------------- interface setup ------------
+for(a=16;a-->0;){	w("<img class=sidebar id=buildPl"+a+" style='display:none;'>");}		// placement tiles
+
+// debug, email and sidebar
+w("<img src='./g/sidebar.png' class=sidebar style='right:0;top:0' id=sidebar><img class=as style='top:485;right:0;' src=./email.bmp><span id=debugwin class=world style='z-index:10000;left:0;top:0;color:#FFF;font:10px verdana;'></span>");
+// build list scroll buttons
+w("<img src='./g/hstripup0.png' class=sidebar style='right:106;top:454' onmouseover='this.src=\"./g/hstripup1.png\"' onmouseout='this.src=\"./g/hstripup0.png\"' onclick='buildOffset--;if(buildOffset<0) buildOffset=0;drawIcons();'>");
+w("<img src='./g/hstripdn0.png' class=sidebar style='right:76;top:454' onmouseover='this.src=\"./g/hstripdn1.png\"' onmouseout='this.src=\"./g/hstripdn0.png\"' onclick='buildOffset++;if(buildOffset>buildablelist.length-6) buildOffset=(buildablelist.length>6)?buildablelist.length-6:0;drawIcons();'>");
+w("<img src='./g/hstripup0.png' class=sidebar style='right:38;top:454' onmouseover='this.src=\"./g/hstripup1.png\"' onmouseout='this.src=\"./g/hstripup0.png\"' onclick='buildUOffset--;if(buildUOffset<0) buildUOffset=0;drawIcons();'>");
+w("<img src='./g/hstripdn0.png' class=sidebar style='right:6;top:454' onmouseover='this.src=\"./g/hstripdn1.png\"' onmouseout='this.src=\"./g/hstripdn0.png\"' onclick='buildUOffset++;if(buildUOffset>buildableUlist.length-6) buildUOffset=(buildableUlist.length>6)?buildableUlist.length-6:0;drawIcons();'>");
+
+
+for(a=6;a-->0;){	// structure icons and overlays
+			w("<img class=sidebar id=icon"+a+" style='display:none;right:76;top:"+(166+a*48)+"' onclick='mouseClickedIcon("+a+")'>");
+			w("<img class='sidebar op50' id=iconO"+a+" style='display:none;right:76;top:"+(166+a*48)+"' onclick='mouseClickedIconOverlay()'>");}
+
+for(a=6;a-->0;){	// unit icons and overlays
+			w("<img class=sidebar id=icon1"+a+" style='display:none;right:6;top:"+(166+a*48)+"' onclick='mouseClickedIcon(1"+a+")'>");
+			w("<img class='sidebar op50' id=iconO1"+a+" style='display:none;right:6;top:"+(166+a*48)+"' onclick='mouseClickedIconOverlay()'>");}
+//w("<img id=bready src='./g/readyicnh.png' class=sidebar style='right:90;top:300'");
+
+
+
+
+
+
+
+
+drawStructs=function(){					// ------------ draw structures -----------
+	for(var a=maxbld;a-->0;){
+		if(bldh[a]>0){
+			var loopfr0=0, loopfr1=0;	// loopfr0: first frame of animation (where to go when done)
+			var iname="", done=null, start=null;	// loopfr1: last frame  of animation
+								// loopfrf: first TRUE frame of animation, used for bound check (MAYBE USELESS)
+								// what to do on the first frame
+			switch(bldt[a]){
+				case 0: iname="fact "; loopfr1=3; break;
+				case 1: iname="nuke "; loopfr1=3;break;
+				case 2: iname="pyle "; loopfr1=9; break;
+				case 3: iname="nuk2 "; loopfr1=3;break;
+				case 4: iname="proc "; loopfr1=11; break;
+				case 5: iname="fix "; break;
+				case 6: iname="gtwr "; break;
+				case 7: iname="hpad "; break;
+				case 8: iname="hq "; loopfr1=15; break;
+				case 9: iname="weap "; break;
+				case 10: iname="silo "; break;
+				case 11: iname="eye "; loopfr1=15; break;
+				case 12: iname="atwr "; break;
+				case 13: iname="afld "; loopfr1=15; break;
+				case 14: iname="hand "; break;
+				case 15: iname="obli "; break;
+				case 16: iname="sam "; break;
+				case 17: iname="tmpl "; break;
+				case 18: iname="gun "; loopfr0=6;loopfr1=6;break;
+				case 19: iname="fact "; loopfr0=3;loopfr1=23; done=function(aa){bldt[aa]=0;}; break;
+				case 20: iname="fact "; loopfr0=24;loopfr1=47; done=function(aa){bldt[aa]=21;}; break;
+				case 21: iname="fact "; loopfr0=24;loopfr1=27; break;
+				case 22: iname="fact "; loopfr0=48;loopfr1=48; break;
+
+				case 23: iname="nuke "; loopfr0=4;loopfr1=7; break;
+				case 24: iname="pyle "; loopfr0=10;loopfr1=19; break;
+				case 25: iname="nuk2 "; loopfr0=4;loopfr1=7; break;
+				case 26: iname="proc "; loopfr0=30;loopfr1=41; break;
+				case 27: iname="fix "; loopfr0=7;loopfr1=7; break;
+				case 28: iname="gtwr "; loopfr0=1;loopfr1=1; break;
+				case 29: iname="hpad "; loopfr0=7;loopfr1=7; break;
+				case 30: iname="hq "; loopfr0=16;loopfr1=31; break;
+				case 31: iname="weap "; loopfr0=1;loopfr1=1; break;
+				case 32: iname="silo "; loopfr0=5;loopfr1=5; break;
+				case 33: iname="eye "; loopfr0=16;loopfr1=31; break;
+				case 34: iname="atwr "; loopfr0=1;loopfr1=1; break;
+				case 35: iname="afld "; loopfr0=16;loopfr1=31; break;
+				case 36: iname="hand "; loopfr0=1;loopfr1=1; break;
+				case 37: iname="obli "; loopfr0=4;loopfr1=4; break;
+				case 38: iname="sam "; loopfr0=64;loopfr1=64; break;
+				case 39: iname="tmpl "; loopfr0=5;loopfr1=5; break;
+				case 40: iname="gun "; loopfr0=70;loopfr1=70; break;
+
+				case 41: iname="nuke "; loopfr0=8;loopfr1=8; break;
+				case 42: iname="pyle "; loopfr0=20;loopfr1=20; break;
+				case 43: iname="nuk2 "; loopfr0=8;loopfr1=8; break;
+				case 44: iname="proc "; loopfr0=60;loopfr1=60; break;
+				case 45: iname="fix "; loopfr0=14;loopfr1=14; break;
+				case 46: iname="gtwr "; loopfr0=2;loopfr1=2; break;
+				case 47: iname="hpad "; loopfr0=14;loopfr1=14; break;
+				case 48: iname="hq "; loopfr0=32;loopfr1=32; break;
+				case 49: iname="weap "; loopfr0=2;loopfr1=2; break;
+				case 50: iname="silo "; loopfr0=10;loopfr1=10; break;
+				case 51: iname="eye "; loopfr0=32;loopfr1=32; break;
+				case 52: iname="atwr "; loopfr0=2;loopfr1=2; break;
+				case 53: iname="afld "; loopfr0=32;loopfr1=32; break;
+				case 54: iname="hand "; loopfr0=2;loopfr1=2; break;
+				case 55: iname="obli "; loopfr0=8;loopfr1=8; break;
+				case 56: iname="sam "; loopfr0=128;loopfr1=128; break;
+				case 57: iname="tmpl "; loopfr0=10;loopfr1=10; break;
+				case 58: break;
+
+				case 59: iname="tmpl "; loopfr0=0;loopfr1=4; start=function(aa){snd_fx(3); addAnim(22,[bldx[aa]+58,bldy[aa]-8],null); addAnim(23,[bldx[aa]+36,bldy[aa]],[targetX,targetY]);}; done=function(aa){bldt[aa]=17}; break;
+				case 60: iname="tmpl "; loopfr0=5;loopfr1=9; start=function(aa){snd_fx(3); addAnim(22,[bldx[aa]+58,bldy[aa]-8],null); addAnim(23,[bldx[aa]+36,bldy[aa]],[targetX,targetY]);}; done=function(aa){bldt[aa]=39}; break;
+
+			}
+
+			o("bld"+a).src="./i/"+iname+to3dgt(bldfr[a])+".png";		// ensure 3 digits
+			
+			if(bldfr[a]<loopfr0){bldfr[a]=loopfr0;}else{
+				if(bldfr[a]==loopfr0){ if(start!=null) start(a); }	// do something on the first frame
+				bldfr[a]++;
+			}
+
+			if(bldfr[a]>loopfr1){					// loop the animation
+				bldfr[a]=loopfr0;				// go to first frame
+				if(done!=null) done(a);
+			}
+		}
+	}
+};
+
+
+
+drawUnits=function(){					// ------------ draw units -----------
+	for(var a=maxu;a-->0;){
+		if(uh[a]>0){
+			var iname, ox=0,oy=0, turreted=0, foffset=0;		// frame offset
+			switch(ut[a]){
+				case 0:								// MCV
+				case 1: iname="mcv ";ox=12;oy=12;break;				// MCV deploy mode
+				case 2: 							// APC
+				case 3: 							// APC loading
+				case 4: iname="apc ";break;					// APC unloading
+				case 5: iname="arty ";break;					// Artillery
+				case 6: iname="bike ";break;					// Recon bike
+				case 7: iname="ftnk ";break;					// Flame tank
+				case 8: iname="harv ";						// Harvester
+				case 9: iname="harv ";						// Harvester working: N
+				case 10: iname="harv ";						// Harvester working: NW
+				case 11: iname="harv ";						// Harvester working: W
+				case 12: iname="harv ";						// Harvester working: SW
+				case 13: iname="harv ";						// Harvester working: S
+				case 14: iname="harv ";						// Harvester working: SE
+				case 15: iname="harv ";						// Harvester working: E
+				case 16: iname="harv ";ox=6;oy=6;break;				// Harvester working: NE
+				case 17: iname="lst ";						// Landing craft vertical
+				case 18: iname="lst ";ox=6;oy=6;break;				// Landing craft horizontal
+				case 19: iname="stnk ";break;					// Stealth tank
+				case 20: iname="a10 ";ox=12;oy=12; turreted=32; break;		// A10
+				case 21: iname="c17 ";ox=12;oy=12;break;			// C17
+				case 22: iname="orca ";ox=6;oy=6;break;				// Orca
+				case 23: iname="orca ";ox=6;oy=6;break;				// Orca in air
+				case 24: iname="heli ";ox=6;oy=6; turreted=1; break;		// Apache
+				case 25: iname="heli ";ox=6;oy=6; turreted=1; break;		// Apache in air
+				case 26: iname="htnk ";ox=6;oy=6; turreted=32; break;		// Mammoth tank
+				case 27: iname="jeep "; turreted=32; break;			// HMMV
+				case 28: iname="bggy "; turreted=32; break;			// NOD buggy
+				case 29: iname="ltnk "; turreted=32; break;			// Light tank
+				case 30: iname="mhq "; turreted=32; break;			// Mobile HQ
+				case 31: iname="mlrs "; turreted=32; break;			// MLRS - SSM
+				case 32: iname="mlrs "; turreted=64; break;			// MLRS - SSM 1 left
+				case 33: iname="mlrs "; turreted=96; break;			// MLRS - SSM 0 left
+				case 34: iname="msam "; turreted=32; break;			// MLRS - SAM up
+				case 35: iname="msam "; turreted=64; break;			// MLRS - SAM down
+				case 36: iname="mtnk ";ox=12;oy=12; turreted=32; break;		// Medium tank
+				case 37: iname="tran ";ox=12;oy=12; turreted=1; break;		// Chinook
+				case 38: iname="tran ";ox=12;oy=12; turreted=1; break;		// Chinook in air
+				case 39: iname="tran ";ox=12;oy=12; turreted=1; break;		// Chinook loading
+				
+			}
+			var ix=ux[a]-ox;
+			var iy=uy[a]-oy;
+			
+			if(turreted){
+				o("uT"+a).style.left=ix;
+				o("uT"+a).style.top=iy;
+				if(ut[a]==20){
+					o("uT"+a).src="./i/"+iname+to3dgt(ud[a]+turreted)+".png";
+					iy-=48;
+				}else{
+					o("uT"+a).src="./i/"+iname+to3dgt(uTd[a]+turreted)+".png";
+				}
+
+			}
+
+			o("u"+a).src="./i/"+iname+to3dgt(ud[a]+foffset)+".png";		// ensure 3 digits
+			o("u"+a).style.left=ix;
+			o("u"+a).style.top=iy;
+
+			o("usel"+a).style.left=ix;
+			o("usel"+a).style.top=iy;
+
+			o("u1h"+a).style.left=ix;
+			o("u1h"+a).style.top=iy-4;
+
+			o("u2h"+a).style.left=ix+1;
+			o("u2h"+a).style.top=iy-3;
+
+	
+
+
+		}else{							// unit is dead
+			o("u"+a).style.display='none';			// hide it
+		}
+	}
+};
+
+
+
+drawAnims=function(){					// ------------ draw animations -----------
+	for(var a=maxani;a-->0;){
+		if(ani[a]>0){
+			var offsetx=0, offsety=0, maxfr=19, done=null, objStyle=o("an"+a).style;
+			objStyle.display='block';		// visible
+			// WARNING: building numbers do not correspond to animation numbers
+			switch(ani[a]){
+				case 1: iname="factmake ";	maxfr=31; offsetx=24;		done=function(aa){addStruct(0,bldmaxh[0],anix[aa],aniy[aa]); addBuildable([0],1);}; break;
+				case 2: iname="nukemake ";					done=function(aa){addStruct(1,bldmaxh[1],anix[aa],aniy[aa]); addBuildable([1,13,2,3,4],1);}; break;
+				case 3: iname="pylemake ";					done=function(aa){addStruct(2,bldmaxh[2],anix[aa],aniy[aa]); addBuildable([5,6],1);}; break;
+				case 4: iname="nuk2make ";					done=function(aa){addStruct(3,bldmaxh[3],anix[aa],aniy[aa]);}; break;
+				case 5: iname="procmake ";					done=function(aa){addStruct(4,bldmaxh[4],anix[aa],aniy[aa]); addBuildable([7,8,9,13],1);}; break;
+				case 6: iname="fixmake "; 					done=function(aa){addStruct(5,bldmaxh[5],anix[aa],aniy[aa]);}; break;
+				case 7: iname="gtwrmake ";					done=function(aa){addStruct(6,bldmaxh[6],anix[aa],aniy[aa]);}; break;
+				case 8: iname="hpadmake ";					done=function(aa){addStruct(7,bldmaxh[7],anix[aa],aniy[aa]);}; break;
+				case 9: iname="hqmake ";					done=function(aa){addStruct(8,bldmaxh[8],anix[aa],aniy[aa]); addBuildable([10,11,12,14,16],1);}; break;
+				case 10:iname="weapmake ";	offsety=24;			done=function(aa){addStruct(9,bldmaxh[9],anix[aa],aniy[aa]-24);}; break;
+				case 11:iname="silomake ";					done=function(aa){addStruct(10,bldmaxh[10],anix[aa],aniy[aa]);}; break;
+				case 12:iname="eyemake ";					done=function(aa){addStruct(11,bldmaxh[11],anix[aa],aniy[aa]);}; break;
+				case 13:iname="atwrmake ";	maxfr=13;offsety=24;		done=function(aa){addStruct(12,bldmaxh[12],anix[aa],aniy[aa]-24);}; break;
+				case 14:iname="afldmake ";	maxfr=13;			done=function(aa){addStruct(13,bldmaxh[13],anix[aa],aniy[aa]);}; break;
+				case 15:iname="handmake ";	offsety=24;			done=function(aa){addStruct(14,bldmaxh[14],anix[aa],aniy[aa]-24); addBuildable([15,17,6],1);}; break;
+				case 16:iname="oblimake ";	offsety=24;			done=function(aa){addStruct(15,bldmaxh[15],anix[aa],aniy[aa]-24);}; break;
+				case 17:iname="sammake ";	maxfr=29;			done=function(aa){addStruct(16,bldmaxh[16],anix[aa],aniy[aa]);}; break;
+				case 18:iname="tmplmake ";	maxfr=35;offsety=24;		done=function(aa){addStruct(17,bldmaxh[17],anix[aa],aniy[aa]-24);addBuildable([0],0);snd_eva(6);}; break;
+				case 19:iname="gunmake ";					done=function(aa){addStruct(18,bldmaxh[18],anix[aa],aniy[aa]);}; break;
+
+				case 20:iname="art-exp1 ";	maxfr=21;offsety=22;offsetx=21;	break;
+				case 21:iname="fball1 ";	maxfr=17;offsety=22;offsetx=34;	break;
+
+				case 22:iname="atomdoor ";	maxfr=32;offsety=22;offsetx=34;	break;
+				case 23:iname="atomicup ";	maxfr=3;offsetx=24;		if(aniy[a]+640<0){ani[a]=0;objStyle.display="none";addAnim(24,[animx[a],-200],[0,animy[a]]);}else{aniy[a]-=12;} break;
+				case 24:iname="atomicdn ";	maxfr=3;offsetx=24;		if(aniy[a]-animy[a]+40>0){ani[a]=0;objStyle.display="none";addAnim(25,[anix[a],animy[a]],null);snd_fx(4);}else{ if(aniy[a]>0 && !animx[a]){snd_eva(5);animx[a]=1;} aniy[a]+=12;} break;
+				case 25:iname="atomsfx ";	maxfr=26;offsetx=39;offsety=56;	if(anifr[a]==3){ damageRadius(dmgAtomBomb,9,anix[a]-39,aniy[a]-56); } break;
+
+				case 26:iname="fire1 ";		maxfr=14;offsety=12;offsetx=12;	done=function(aa){if((Math.random()*2)>>0) addAnim(30,[anix[aa],aniy[aa]],null);};break;
+				case 27:iname="fire2 ";		maxfr=14;offsety=12;offsetx=12;	done=function(aa){if((Math.random()*2)>>0) addAnim(30,[anix[aa],aniy[aa]],null);};break;
+				case 28:iname="fire3 ";		maxfr=14;offsety=12;offsetx=12;	done=function(aa){if((Math.random()*2)>>0) addAnim(30,[anix[aa],aniy[aa]],null);};break;
+				case 29:iname="fire4 ";		maxfr=14;offsety=4;offsetx=4;	break;
+
+				case 30:iname="smoke_m ";	maxfr=90;offsety=12;offsetx=12;	break;
+
+			}
+
+			var ix=anix[a]-offsetx, iy=aniy[a]-offsety;
+
+			o("an"+a).src="./i/"+iname+to3dgt(anifr[a])+".png";	// ensure 3 digits
+			objStyle.left=ix;
+			objStyle.top=iy;
+
+			
+
+			anifr[a]++;
+			if(anifr[a]>maxfr){				// done the animation
+				if(!(anil[a]>0)){
+					ani[a]=0;				// hide it
+					objStyle.display='none';
+					if(done!=null) done(a);				// do something now that animation is over
+				}else{
+					anil[a]--;anifr[a]=0;			// loop animation
+				}
+			}
+		}
+	}
+};
+
+drawIcons=function(){					// ------------ draw the icons for construction, offset -----
+	var b=6;
+	for(var a=buildOffset;a<buildablelist.length;a++){
+		b--;if(b<0) break;			// dont draw if there's nothing
+		var iname="";
+		switch(buildablelist[a]){
+			case 0:  iname='nukeicnh.png';break;
+			case 1:  iname='pyleicnh.png';break;
+			case 2:  iname='nuk2icnh.png';break;
+			case 3:  iname='procicnh.png';break;
+			case 4:  iname='fixicnh.png';break;
+			case 5:  iname='gtwricnh.png';break;
+			case 6:  iname='hpadicnh.png';break;
+			case 7:  iname='hqicnh.png';break;
+			case 8:  iname='weapicnh.png';break;
+			case 9:  iname='siloicnh.png';break;
+			case 10:  iname='eyeicnh.png';break;
+			case 11:  iname='atwricnh.png';break;
+			case 12:  iname='afldicnh.png';break;
+			case 13:  iname='handicnh.png';break;
+			case 14:  iname='obliicnh.png';break;
+			case 15:  iname='samicnh.png';break;
+			case 16:  iname='tmplicnh.png';break;
+			case 17:  iname='gunicnh.png';break;
+		}
+		o("icon"+(5-b)).src='./g/'+iname;
+		o("icon"+(5-b)).style.display='block';
+	}
+	var b=6;
+	for(var a=buildUOffset;a<buildableUlist.length;a++){
+		b--;if(b<0) break;			// dont draw if there's nothing
+		var iname="";
+		switch(buildableUlist[a]){
+			case 0:  iname='atomicnh.png';break;	// Atom bomb
+			case 1:  iname='ionicnh.png';break;	// Ion cannon
+			case 2:  iname='a10icnh.png';break;	// Airstrike
+		}
+		o("icon1"+(5-b)).src='./g/'+iname;
+		o("icon1"+(5-b)).style.display='block';
+	}
+};
+
+drawIconOverlays=function(){				// ------------ draw the icon overlays for build process -----
+	if(buildStructType<0){}else{				// only draw when necessary
+		if(!buildStructTime){				// done building! don't draw anything!
+		} else {
+
+			for(var a=6;a-->0;){
+				if(buildablelist[a+buildOffset]==buildStructType){
+					var iname=(((1-(buildStructTime/buildStructMaxTime))*109)>>0)+"";
+					iname=to3dgt(iname);						// ensure 3 digits
+					buildStructTime--;
+					if(!buildStructTime){ 	iname="108";				// done building
+								snd_eva(1);				// sound: "construction complete"
+					}
+				}else{
+					var iname="108";
+				}	
+				o("iconO"+a).src='./g/hclock'+iname+".png";
+				o("iconO"+a).style.display='block';
+			}
+		}
+	}
+};
+
+drawUnitSelections=function(){				// ------------ draw the selection boxes and health bars FOR UNITS ----
+	for(var a=selectlist.length;a-->0;){
+		if(uh[selectlist[a]]>0){
+			o("usel"+selectlist[a]).style.display='block';	// selection box
+			o("u1h"+selectlist[a]).style.display='block';	// health bar parts
+			o("u2h"+selectlist[a]).style.display='block';	// health bar parts
+
+		}else{							// remove dead selections
+			o("usel"+selectlist[a]).style.display='none';	// selection box
+			o("u1h"+selectlist[a]).style.display='none';	// health bar parts
+			o("u2h"+selectlist[a]).style.display='none';	// health bar parts
+			selectlist.splice(a,1);
+		}
+	}
+	if(!a) mouseMode=0;						// reset to unit / structure select
+};
+
+
+drawBuildGrid=function(){				// ------------ draw the building placement grid ----
+	var a=mouseX, b=mouseY, bgrid=[];
+	var c=toGrid(a)/24,d=toGrid(b)/24;
+	var mgrid=[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1];
+	for(var i=4;i-->0;){var j=0;
+		if(((c+j)<worldw && (d+i)<worldh) && !worldpass[(c+j)+(d+i)*worldw]) mgrid[j+i*4]=0;j++;
+		if(((c+j)<worldw && (d+i)<worldh) && !worldpass[(c+j)+(d+i)*worldw]) mgrid[j+i*4]=0;j++;
+		if(((c+j)<worldw && (d+i)<worldh) && !worldpass[(c+j)+(d+i)*worldw]) mgrid[j+i*4]=0;j++;
+		if(((c+j)<worldw && (d+i)<worldh) && !worldpass[(c+j)+(d+i)*worldw]) mgrid[j+i*4]=0;j++;
+	}
+	
+	switch(buildStructType){
+		case 0:	bgrid=[1,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0]; break;		// NUKE
+		case 1:	bgrid=[1,1,0,0,1,1,0,0,1,1,0,0,0,0,0,0]; break;		// PYLE
+		case 2:	bgrid=[1,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0]; break;		// NUK2
+		case 3:	bgrid=[0,1,0,0,1,1,1,0,1,1,1,0,1,1,1,0]; break;		// PROC
+		case 4:	bgrid=[0,1,0,0,1,1,1,0,1,1,1,0,1,1,1,0]; break;		// FIX
+		case 5:	bgrid=[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]; break;		// GTWR
+		case 6:	bgrid=[1,1,0,0,1,1,0,0,1,1,0,0,0,0,0,0]; break;		// HPAD
+		case 7:	bgrid=[1,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0]; break;		// HQ
+		case 8:	bgrid=[1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,0]; break;		// WEAP
+		case 9:	bgrid=[1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0]; break;		// SILO
+		case 10:bgrid=[1,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0]; break;		// EYE
+		case 11:bgrid=[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]; break;		// ATWR
+		case 12:bgrid=[1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0]; break;		// AFLD
+		case 13:bgrid=[1,1,0,0,1,1,0,0,1,1,0,0,0,0,0,0]; break;		// HAND
+		case 14:bgrid=[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]; break;		// OBLI
+		case 15:bgrid=[1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0]; break;		// SAM
+		case 16:bgrid=[1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,0]; break;		// TMPL
+		case 17:bgrid=[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]; break;		// GUN
+	}
+	var pF=0;
+	for(i=16;i-->0;){
+		if(bgrid[i]){
+			o("buildPl"+i).style.display='block';
+			o("buildPl"+i).style.left=toGrid(a)+24*(i%4);
+			o("buildPl"+i).style.top=toGrid(b)+24*((i/4)>>0);
+			if(mgrid[i]){
+				o("buildPl"+i).src='./i/trans1.gif';
+				pF=1;
+			}else{
+				o("buildPl"+i).src='./i/trans0.gif';
+			}
+		}
+	}
+	placementFlag=pF;
+	pGrid=bgrid;
+};
+
+
+hideBuildGrid=function(){				// ------------ hide the build placement grid ------
+		for(var i=16;i-->0;) o("buildPl"+i).style.display='none';			// hide grid
+};
+
+hideSelectionBoxes=function(a){				// ----------- hide all selection and health boxes ----
+		for(var i=selectlist.length;i-->0;){			// flush unit selections
+			o("usel"+selectlist[i]).style.display='none';	// selection box
+			o("u1h"+selectlist[i]).style.display='none';	// health bar parts
+			o("u2h"+selectlist[i]).style.display='none';	// health bar parts
+		}
+		for(var i=maxbld;i-->0;){			// flush structure selection
+			o("bldsel"+i).style.display='none';		// selection box
+			o("bld1h"+i).style.display='none';		// health bar parts
+			o("bld2h"+i).style.display='none';		// health bar parts
+		}
+		selectlist=[];						// reset the selection arrays
+		selectStruct=0;
+};
+
+hideIconOverlays=function(){				// ----------- hide icon overlays ----
+		for(var i=6;i-->0;) o("iconO"+i).style.display='none';
+};
+
+// ################################### (GAME SETTINGS) ############################
+
+				// max health settings for structures
+bldmaxh=[800,400,800,600,900,800,400,800,1000,400,300,1000,600,1000,800,400,400,2000,400];
+
+
+selectlist=[];			// selection array
+selectStruct=0;			// is a structure currently selected?
+buildablelist=[];		// buildable structures
+buildableUlist=[];		// buildable units and weapons
+buildOffset=0;			// first icon offset relative to structure buildlist
+buildUOffset=0;			// first icon offset relative to unit buildlist
+buildStructType=-1;		// structure type for the build process
+buildStructTime=-1;		// time left until build process is done
+buildStructMaxTime=-1;		// max build process time
+
+
+// damage matrices for weapons with splash effect
+
+dmgAtomBomb=[150,150,150,150,150,150,150,150,150,
+150,275,275,275,275,275,275,275,150,
+150,275,400,400,400,400,400,275,150,
+150,275,400,600,600,600,400,275,150,
+150,275,400,600,1000,600,400,275,150,
+150,275,400,600,600,600,400,275,150,
+150,275,400,400,400,400,400,275,150,
+150,275,275,275,275,275,275,275,150,
+150,150,150,150,150,150,150,150,150];
+
+// precalculate sin and cosine tables | sin: 0 - 31, cos: 32 - 63
+sincosTable=[0,1,2,2,3,3,4,4,4,4,4,3,3,2,2,1,0,-1,-2,-2,-3,-3,-4,-4,-4,-4,-4,-3,-3,-2,-2,-1,4,4,4,3,3,2,2,1,0,-1,-2,-2,-3,-3,-4,-4,-4,-4,-4,-3,-3,-2,-2,-1,0,1,2,2,3,3,4,4];
+
+
+// ################################### GAME STUFF #############################
+
+damageRadius=function(a,h,sx,sy){			// ------------ damage buildings (for now) within a certain range -----------
+							// a = array with radii and damage info pairs
+							// h = height of damage matrix
+	var c=(sx/24)>>0,d=(sy/24)>>0;
+	c-=(h/2)>>0;d-=(h/2)>>0;			// adjust for center
+	if(h==9){c+=2;d+=2;}				// adjust center for nuke
+	for(var i=h;i-->0;){for(var j=(a.length/h)>>0;j-->0;){
+		var ax=c+j, ay=d+i, az=worldbld[ax+(ay*worldw)];
+		if(az && ax-worldw<0 && ay-worldh<0) bldh[az]-=a[j+(i*h)];
+	}}
+};
+
+changePassable=function(a,h,sx,sy,mtrx,obj){		// ------------ change the passability of map tiles (thru world____[])-----------
+							// mtrx = name of change matrix
+							// h 	= height of change matrix 
+							// obj	= an object reference (if we want to fill the matrix with one)
+	var c=(sx/24)>>0,d=(sy/24)>>0;
+	for(var i=h;i-->0;){for(var j=(a.length/h)>>0;j-->0;){
+		var ax=c+j, ay=d+i;
+		if(ax-worldw<0 && ay-worldh<0){
+			if(obj==null){
+				mtrx[ax+ay*worldw]+=a[j+i*h];
+			}else{
+				mtrx[ax+ay*worldw]+=(a[j+i*h])?obj:0;
+			}
+		}
+	}}
+};
+
+findStructure=function(t){				// ------------ find structure based on types, returns the index and specific type -----------
+	for(var a=maxbld;a-->0;){ for(var b=t.length;b-->0;) if(bldh[a]>0 && (bldt[a]==t[b])) return [a,t[b]]; }
+	return [];
+};
+
+mouseClickedIconOverlay=function(){			// ------------ clicked on icon overlay, switch to placement mode -----------
+mouseHasClicked=mDelay;
+	if(buildStructTime==0){
+		mouseMode=2;
+		hideSelectionBoxes();			// deselect everything there was before
+	}else{
+		snd_eva(2);				// sound: "unable to comply"
+	}
+};
+
+mouseClickedIcon=function(a){				// ------------ clicked on icon, start building stuff -----------
+mouseHasClicked=mDelay;
+	if(a<10){						// for structures
+		addBuildProcess(buildablelist[a+buildOffset]);		// if it's a building, do normal build
+		snd_eva(3);						// sound: "building"
+	}else{							// for units and weapons
+		addUBuildProcess(buildableUlist[(a%10)+buildUOffset]);	// unit/weapon build
+		//snd_eva(3);						// sound: "building"
+	}	
+};
+
+mouseClickedStruct=function(a){				// ------------ clicked on structure -----------
+	mouseHasClicked=mDelay;
+	hideSelectionBoxes();				// hide and reset selections
+	o("bldsel"+a).style.display='block';		// selection box
+	o("bld1h"+a).style.display='block';		// health bar parts
+	o("bld2h"+a).style.display='block';		// health bar parts
+	//mouseMode=0;					// set to unit selection mode
+	selectStruct=1;
+};
+
+mouseClickedUnit=function(a){				// ------------ clicked on unit, add to selection / deploy -----------
+mouseHasClicked=mDelay;
+	if(selectlist.length==1 && selectlist[0]==a){	// previously had one unit selected and it was the same one
+		if(ut[a]==0) ut[a]=1;			// deploy MCV
+	}else{
+		hideSelectionBoxes();			// hide and reset selections
+		snd_v_select(0);			// "vehicle reporting"
+		selectlist.push(a);			// selected 1 unit
+		mouseMode=1;				// set to unit command mode
+	}
+};
+
+
+addUBuildProcess=function(a){				// -------------- add unit construction / weapon deployment process ------------------
+//	var b;
+	switch(a){
+		case 0: 	mouseMode=4;snd_eva(7); break;	// atom bomb
+//		case 1: 	b=10; break;			// ion cannon
+//		case 2: 	b=10; break;			// airstrike
+		default: a=-1;
+	}
+//	buildStructType=a;		// structure type for the build process
+//	buildStructTime=b;		// time left until build process is done
+//	buildStructMaxTime=b;		// max build process time	
+};
+
+addBuildProcess=function(a){				// -------------- add construction process ------------------
+	var b;
+	switch(a){
+		case 0: 	b=10; break;		// power plant
+		case 1: 	b=10; break;		// barracks
+		case 2: 	b=10; break;		// adv power plant
+		case 3: 	b=10; break;		// refinery
+		case 4: 	b=10; break;		// see the structure list; type is (case+1)
+		case 5: 	b=10; break;
+		case 6: 	b=10; break;
+		case 7: 	b=10; break;
+		case 8: 	b=10; break;
+		case 9: 	b=10; break;
+		case 10: 	b=10; break;
+		case 11: 	b=10; break;
+		case 12: 	b=10; break;
+		case 13: 	b=10; break;
+		case 14: 	b=10; break;
+		case 15: 	b=10; break;
+		case 16: 	b=10; break;
+		case 17: 	b=10; break;
+
+		default: a=-1;
+	}
+	buildStructType=a;		// structure type for the build process
+	buildStructTime=b;		// time left until build process is done
+	buildStructMaxTime=b;		// max build process time
+};
+
+
+addBuildable=function(newopts,isS){				// -------------- add construction ability ------------------
+								// isS = is it adding onto buildable structure list?
+	var bList=(isS)?buildablelist:buildableUlist;
+	var c=0;
+	while(newopts.length>0){
+		var b=newopts.pop();
+		for(var i=bList.length;i-->0;){
+			if(bList[i]==b) break;			// if already able to build, don't add into buildable list
+		}
+		if(i<0) {
+			bList.push(b);				// put it into the buildable list
+			c++;					// flag for "new construction options"
+		}
+			
+	}
+	if(c&&isS) snd_eva(0);					// sound: "new construction options"
+	drawIcons();						// add new icons in
+};
+
+
+addStruct=function(t,h,x,y){ 				// ---------- add structure ---------------
+	for(var a=maxbld;a-->0;){ if(bldh[a]<0) break; }
+	if(a>0) {bldt[a]=t;bldx[a]=x;bldy[a]=y;bldh[a]=h;if(t==18)bldfr[a]=6;
+	o("bld"+a).style.zIndex=(t==1||t==3||t==4||t==8||t==9||t==11||t==12||t==14||t==15||t==17)?((y/24)>>0)+4:((y/24)>>0)+3;	// set correct layer
+
+	var oy=24,btype=22,ssize=22;		// offsets for bibs and also used for healthbar width
+	switch(t){
+		case 0:	 
+		case 21:
+		case 22: btype=32;ssize=32; break;	// FACT
+		case 4:
+		case 5:
+		case 9:
+		case 17: btype=32;ssize=33;oy=48; break;
+		case 6: 
+		case 18: btype=0;ssize=11; break;
+		case 12: 		
+		case 15: btype=0;ssize=12; break;
+		case 16: btype=0;ssize=21; break;
+		case 13: btype=42;ssize=42; break;
+		case 14: oy=48;ssize=23; break;
+		case 10: oy=0;ssize=21; break;
+	}
+	if(btype>0){
+		o("bldbib"+a).style.left=(!t)?x-24:x;
+		o("bldbib"+a).style.top=y+oy;
+		o("bldbib"+a).src='./i/bib'+btype+'.png';
+		o("bldbib"+a).style.display='block';									// show bib
+	}else if(t==16){
+		btype=20;
+	}
+	o("bld"+a).style.left=(!t)?x-24:x;
+	o("bld"+a).style.top=y;
+	o("bld"+a).style.display='block';										// show structure
+	o("bldsel"+a).style.left=(!t)?x-24:x;
+	o("bldsel"+a).style.top=y;
+	o("bldsel"+a).src='./i/sel'+ssize+".png";
+
+	o("bld1h"+a).style.left=(!t)?x-24:x;
+	o("bld1h"+a).style.top=y-4;
+	o("bld1h"+a).style.width=(((ssize/10)>>0)*24);
+
+	o("bld2h"+a).style.left=(!t)?x-23:x+1;
+	o("bld2h"+a).src='./i/health3.png';
+	o("bld2h"+a).style.top=y-3;
+	
+
+	var bgrid=[],abgrid=[],oy=0;
+	switch(t){
+		case 19: case 20: case 21: case 22:
+		case 0:	bgrid=[1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,0];abgrid=[1,1,1,0,1,1,1,0,0,0,0,0,0,0,0,0]; 		break;		// FACT
+		case 1:	bgrid=[1,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0];abgrid=[1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0]; 		break;		// NUKE
+		case 2:	bgrid=[1,1,0,0,1,1,0,0,1,1,0,0,0,0,0,0];abgrid=[1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0]; 		break;		// PYLE
+		case 3:	bgrid=[1,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0];abgrid=[1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0]; 		break;		// NUK2
+		case 4:	bgrid=[0,1,0,0,1,1,1,0,1,1,1,0,1,1,1,0];abgrid=[0,1,0,0,1,1,1,0,1,1,1,0,0,0,0,0]; 		break;		// PROC
+		case 5:	bgrid=[0,1,0,0,1,1,1,0,1,1,1,0,1,1,1,0];abgrid=[0,1,0,0,1,1,1,0,0,1,0,0,0,0,0,0]; 		break;		// FIX
+		case 6:	bgrid=[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];abgrid=[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]; 		break;		// GTWR
+		case 7:	bgrid=[1,1,0,0,1,1,0,0,1,1,0,0,0,0,0,0];abgrid=[1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0]; 		break;		// HPAD
+		case 8:	bgrid=[1,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0];abgrid=[1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0]; 		break;		// HQ
+		case 9:	bgrid=[1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,0];abgrid=[1,1,1,0,1,1,1,0,0,0,0,0,0,0,0,0]; oy=24;	break;		// WEAP
+		case 10:bgrid=[1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0];abgrid=[1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0]; 		break;		// SILO
+		case 11:bgrid=[1,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0];abgrid=[1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0]; 		break;		// EYE
+		case 12:bgrid=[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];abgrid=[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]; oy=24;	break;		// ATWR
+		case 13:bgrid=[1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0];abgrid=[1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0]; 		break;		// AFLD
+		case 14:bgrid=[1,1,0,0,1,1,0,0,1,1,0,0,0,0,0,0];abgrid=[1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0]; oy=24;	break;		// HAND
+		case 15:bgrid=[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];abgrid=[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]; oy=24;	break;		// OBLI
+		case 16:bgrid=[1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0];abgrid=[1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0]; 		break;		// SAM
+		case 17:bgrid=[1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,0];abgrid=[1,1,1,0,1,1,1,0,0,0,0,0,0,0,0,0]; oy=24;	break;		// TMPL
+		case 18:bgrid=[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];abgrid=[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]; 		break;		// GUN
+	}
+
+	changePassable(bgrid,4,(!t)?x-24:x,y+oy,worldpass,null);
+	changePassable(abgrid,4,(!t)?x-24:x,y+oy,worldbld,a);
+
+	} else { alert("Structure not created!\nExceeded the max number!"); }
+};
+
+removeStruct=function(a){				// ---------- remove structure ---------------
+	var t=bldt[a],bgrid=[],abgrid=[],x=bldx[a],y=bldy[a],oy=0;
+	if(selectStruct) hideSelectionBoxes();
+	o("bld"+a).style.display='none';
+	o("bldbib"+a).style.display='none';
+	switch(t){
+		case 19:case 20:case 21:case 22:case 0:
+			bgrid=[-1,-1,-1,0,-1,-1,-1,0,-1,-1,-1,0,0,0,0,0];abgrid=[1,1,1,0,1,1,1,0,0,0,0,0,0,0,0,0]; 		break;		// FACT
+		case 1:case 23:
+			bgrid=[-1,0,0,0,-1,-1,0,0,-1,-1,0,0,0,0,0,0];abgrid=[1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0]; 			break;		// NUKE
+		case 2:case 24:
+			bgrid=[-1,-1,0,0,-1,-1,0,0,-1,-1,0,0,0,0,0,0];abgrid=[1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0]; 		break;		// PYLE
+		case 3:case 25:
+			bgrid=[-1,0,0,0,-1,-1,0,0,-1,-1,0,0,0,0,0,0];abgrid=[1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0]; 			break;		// NUK2
+		case 4:case 26:
+			bgrid=[0,-1,0,0,-1,-1,-1,0,-1,-1,-1,0,-1,-1,-1,0];abgrid=[0,1,0,0,1,1,1,0,1,1,1,0,0,0,0,0]; 		break;		// PROC
+		case 5:case 27:
+			bgrid=[0,-1,0,0,-1,-1,-1,0,-1,-1,-1,0,-1,-1,-1,0];abgrid=[0,1,0,0,1,1,1,0,0,1,0,0,0,0,0,0]; 		break;		// FIX
+		case 6:case 28:
+			bgrid=[-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];abgrid=[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]; 			break;		// GTWR
+		case 7:case 29:
+			bgrid=[-1,-1,0,0,-1,-1,0,0,-1,-1,0,0,0,0,0,0];abgrid=[1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0]; 		break;		// HPAD
+		case 8:case 30:
+			bgrid=[-1,0,0,0,-1,-1,0,0,-1,-1,0,0,0,0,0,0];abgrid=[1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0]; 			break;		// HQ
+		case 9:case 31:
+			bgrid=[-1,-1,-1,0,-1,-1,-1,0,-1,-1,-1,0,0,0,0,0];abgrid=[1,1,1,0,1,1,1,0,0,0,0,0,0,0,0,0]; oy=24;	break;		// WEAP
+		case 10:case 32:
+			bgrid=[-1,-1,0,0,-1,-1,0,0,0,0,0,0,0,0,0,0];abgrid=[1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0]; 			break;		// SILO
+		case 11:case 33:
+			bgrid=[-1,0,0,0,-1,-1,0,0,-1,-1,0,0,0,0,0,0];abgrid=[1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0]; 			break;		// EYE
+		case 12:case 34:
+			bgrid=[-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];abgrid=[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]; oy=24;		break;		// ATWR
+		case 13:case 35:
+			bgrid=[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,0];abgrid=[1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0]; 		break;		// AFLD
+		case 14:case 36:
+			bgrid=[-1,-1,0,0,-1,-1,0,0,-1,-1,0,0,0,0,0,0];abgrid=[1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0]; oy=24;		break;		// HAND
+		case 15:case 37:
+			bgrid=[-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];abgrid=[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]; oy=24;		break;		// OBLI
+		case 16:case 38:
+			bgrid=[-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0];abgrid=[1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0]; 			break;		// SAM
+		case 17:case 39:
+			bgrid=[-1,-1,-1,0,-1,-1,-1,0,-1,-1,-1,0,0,0,0,0];abgrid=[1,1,1,0,1,1,1,0,0,0,0,0,0,0,0,0]; oy=24;	break;		// TMPL
+		case 18:case 40:
+			bgrid=[-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];abgrid=[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]; 			break;		// GUN
+	}
+	changePassable(bgrid,4,(!t)?x-24:x,y+oy,worldpass,null);
+	changePassable(abgrid,4,(!t)?x-24:x,y+oy,worldbld,-a);bldh[a]=-1;
+};
+
+addUnit=function(type,d,h,sx,sy,tx,ty){			// ---------- add unit ---------------
+	for(var a=maxu;a-->0;){ if(uh[a]<0) break; }
+	if(a>0) {ut[a]=type;ud[a]=d;ux[a]=sx;uy[a]=sy;umx[a]=tx;umy[a]=ty;uh[a]=h;o("u"+a).style.display='block';
+	switch(type){
+		case 20: case 21: case 22: case 23: case 24: case 25: case 26: case 27: case 35: case 36: case 37:
+			o("uT"+a).style.display='block';
+			uTd[a]=d;
+		case 0: case 1:	case 8: case 9:	case 10: case 11: case 12: case 13: case 14: case 15:
+		case 16: case 17: case 18:
+			o("usel"+a).src='./i/sel22.png';
+			o("u1h"+a).width=48;
+			o("u2h"+a).width=46;
+			break;
+		case 28: case 29: case 30: case 31: case 32: case 32: case 34: 
+			o("uT"+a).style.display='block';
+			uTd[a]=d;
+		default:
+			o("usel"+a).src='./i/sel11.png';
+			o("u1h"+a).width=24;
+			o("u2h"+a).width=22;
+			break;
+	}
+	} else { alert("Unit not created!\nExceeded the max number!"); }
+};
+
+
+addAnim=function(t,c1,c2){				// ---------- add animation ---------------
+	for(var a=maxani;a-->0;){ if(!ani[a]) break; }
+	if(a<maxani) {ani[a]=t;anifr[a]=0;anil[a]=0;anix[a]=c1[0];aniy[a]=c1[1];
+		switch(t){
+			case 23: anil[a]=9999;animx[a]=c2[0];animy[a]=c2[1]; break;	// atom bomb flying up
+			case 24: anil[a]=9999;animx[a]=c2[0];animy[a]=c2[1]; break;	// atom bomb flying down
+
+			case 26: anil[a]=2+(Math.random()*8)>>0; break;			// ground fires big to small
+			case 27: anil[a]=2+(Math.random()*8)>>0; break;
+			case 28: anil[a]=2+(Math.random()*8)>>0; break;
+			case 29: anil[a]=2+(Math.random()*8)>>0; break;
+
+		}			
+	} else { alert("Animation not displayed!\nExceeded the max number!"); }
+};
+
+
+updateStructs=function(){				// ------ update the positions, healths and actions of all alive units -------
+	for(var a=maxbld;a-->0;){
+		if(bldh[a]>0){
+			var oH=100;			// original health
+			switch(bldt[a]){
+				case 0:case 19:case 20:case 21: oH=bldmaxh[0]; break;
+				case 1:case 23: oH=bldmaxh[1]; break;
+				case 2:case 24: oH=bldmaxh[2]; break;
+				case 3:case 25: oH=bldmaxh[3]; break;
+				case 4:case 26: oH=bldmaxh[4]; break;
+				case 5:case 27: oH=bldmaxh[5]; break;
+				case 6:case 28: oH=bldmaxh[6]; break;
+				case 7:case 29: oH=bldmaxh[7]; break;
+				case 8:case 30: oH=bldmaxh[8]; break;
+				case 9:case 31: oH=bldmaxh[9]; break;
+				case 10:case 32: oH=bldmaxh[10]; break;
+				case 11:case 33: oH=bldmaxh[11]; break;
+				case 12:case 34: oH=bldmaxh[12]; break;
+				case 13:case 35: oH=bldmaxh[13]; break;
+				case 14:case 36: oH=bldmaxh[14]; break;
+				case 15:case 37: oH=bldmaxh[15]; break;
+				case 16:case 38: oH=bldmaxh[16]; break;
+				case 17:case 39:case 59:case 60: oH=bldmaxh[17]; break;
+				case 18:case 40: oH=bldmaxh[18]; break;
+			}
+			var pH=bldh[a]/oH;
+			o("bld2h"+a).style.width=((parseInt(o("bld1h"+a).style.width)*pH)>>0)-2;
+
+//o("debugwin").innerHTML="health: "+bldh[a]+"<br>";				// debug messages
+
+			if(pH<.5){
+				if(bldt[a]-20<0){		// change to damaged building type
+				var newtype=-1;
+					switch(bldt[a]){
+						case 0: 	newtype=21; break;
+						case 1: 	newtype=23; break;
+						case 2: 	newtype=24; break;
+						case 3: 	newtype=25; break;
+						case 4: 	newtype=26; break;
+						case 5: 	newtype=27; break;
+						case 6: 	newtype=28; break;
+						case 7: 	newtype=29; break;
+						case 8: 	newtype=30; break;
+						case 9: 	newtype=31; break;
+						case 10: 	newtype=32; break;
+						case 11: 	newtype=33; break;
+						case 12: 	newtype=34; break;
+						case 13: 	newtype=35; break;
+						case 14: 	newtype=36; break;
+						case 15: 	newtype=37; break;
+						case 16: 	newtype=38; break;
+						case 17: 	newtype=39; break;
+						case 18: 	newtype=40; break;
+					}
+				o("bld2h"+a).src='./i/health2.png';
+				bldt[a]=newtype;
+				snd_fx(5);					// sound: structure hemorrhage
+				}
+				if(pH<.2) o("bld2h"+a).src='./i/health1.png';
+			}
+		}else{
+			if(o("bld"+a).style.display=='block'){
+
+				addAnim(21,[bldx[a]+(parseInt(o("bld"+a).width)/2)>>0, bldy[a]+(parseInt(o("bld"+a).height)/2)>>0],null);						// main explosion effect
+				for(var nFires=(Math.random()*12)>>0;nFires-->0;){
+					var dx=(((Math.random()-Math.random())*parseInt(o("bld"+a).width))>>0), dy=(((Math.random()-Math.random())*parseInt(o("bld"+a).height))>>0);
+					addAnim(26+((Math.random()*4)>>0),[dx+bldx[a]+(parseInt(o("bld"+a).width)/2)>>0, dy+bldy[a]+(parseInt(o("bld"+a).height)/2)>>0],null);
+					if((Math.random()*2)>>0){
+						var dx=(((Math.random()-Math.random())*parseInt(o("bld"+a).width))>>0), dy=(((Math.random()-Math.random())*parseInt(o("bld"+a).height))>>0);
+						addAnim(30,[dx+bldx[a]+(parseInt(o("bld"+a).width)/2)>>0, dy+bldy[a]+(parseInt(o("bld"+a).height)/2)>>0],null);
+					}
+				}					// add some fires on the ground
+				removeStruct(a);
+				snd_fx(2);				// sound: building explosion	
+			}
+		}
+	}
+};
+
+updateUnits=function(){					// ------ update the positions, healths and actions of all alive units -------
+	for(var a=maxu;a-->0;){
+		if(uh[a]>0){
+			var ax=ux[a],ay=uy[a],bx=umx[a],by=umy[a],cx=0,cy=0;
+			if(ax==bx && ay==by){
+				utd[a]=0;					// unit has reached destination
+				if(ut[a]==1){					// if it's an MCV
+					if(14!=ud[a]){				// turn until correct for deploy animation
+						if(utd[a]==0) utd[a]=(ud[a]>14)?-1:1;ud[a]+=utd[a];
+						if(ud[a]<0) ud[a]=31;if(ud[a]>31) ud[a]=0;
+					}else{					// start deploy process
+						uh[a]=-1;			// delete unit
+						addAnim(1,[ux[a],uy[a]],null);		// anim:  deploy
+						snd_fx(0);			// sound: construction noise
+					}
+				}
+			}else{	// move to destination
+								//direction	chng x	chng y		actual dir
+				if(ax==bx){
+					if(ay>by){		var md=0;		cy-=1;		vd=0;
+					}else if(ay<by){	var md=16;		cy+=1;		vd=16;
+					}
+				}else if(ax>bx){
+					if(ay<by){		var md=13;	cx-=1;	cy+=1;		vd=12;
+					}else if(ay>by){	var md=3;	cx-=1;	cy-=1;		vd=4;
+					}else if(ay==by){	var md=8;	cx-=1;			vd=8;
+					}
+				}else if(ax<bx){
+					if(ay<by){		var md=19;	cx+=1;	cy+=1;		vd=20;
+					}else if(ay>by){	var md=29;	cx+=1;	cy-=1;		vd=28;
+					}else if(ay==by){	var md=24;	cx+=1;			vd=24;
+					}
+				}
+				
+				// found the desired direction, it is in md
+				// now turn towards it if not already facing it
+				if(ut[a]==20){
+					if(md!=ud[a]){			
+					// heading not right, change to face correct heading
+						if(ud[a]>md) ud[a]--;
+						if(ud[a]<md) ud[a]++;
+						if(ud[a]<0) ud[a]=31;
+						if(ud[a]>31) ud[a]=0;
+					}
+					ud[a]=vd;
+					ux[a]-=sincosTable[ud[a]];
+					uy[a]-=sincosTable[ud[a]+32];
+				} else {
+					if(md!=ud[a]){			
+					// heading not right, change to face correct heading
+						if(utd[a]==0) {
+							utd[a]=(ud[a]>vd)?-1:1;
+							//if(Math.abs(md-ud[a])>15) utd[a]*=-1;
+						}
+						ud[a]+=utd[a];
+						if(ud[a]<0) ud[a]=31;
+						if(ud[a]>31) ud[a]=0;
+						if(Math.abs(md-ud[a])<4){ux[a]+=cx;uy[a]+=cy;}
+					}else{
+					ux[a]+=cx;uy[a]+=cy;utd[a]=0;
+					}				
+				}
+				
+			}
+		}
+	}
+};
+
+
+run=function(delay){					// -------- run game; delay = speed adjustment ---------
+							// general rule: draw first then update
+	drawAnims();
+	drawUnits();
+	drawStructs();
+	if(mouseMode==1) drawUnitSelections();
+
+	if(!(buildStructType<0)) {
+		drawIconOverlays();	// don't draw overlays unless you're building something
+		if(mouseMode==2) drawBuildGrid();
+	}
+	updateStructs();
+	
+	updateUnits();
+
+	if(mouseHasClicked>0) mouseHasClicked--;	// make sure the mouse doesn't mess up
+	setTimeout ("run("+delay+")",delay);
+
+
+
+};
+
+
+
+
+
+
+// ################################### RUNTIME STUFF #############################
+// 1. add in an MCV at (60,60) facing N, make it move to (120,168)
+addBuildable([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17],1);
+addBuildable([2,1,0],0);
+
+//addStruct(0,100,48,24);
+//addAnim(18,[24*17,24*8],null);
+
+//for(aa=4;aa-->0;){for(bb=10;bb-->0;){addUnit(bb+aa*10,3,500,48+(48*aa),48+(48*bb),48+(48*aa),48+(48*bb));}}
+
+// addUnit(20,3,500,480,240,384,48);
+
+run(32);
+
+</script></body>
+</html>

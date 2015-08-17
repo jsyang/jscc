@@ -1,0 +1,44 @@
+<html><link rel="stylesheet" type="text/css" href="style.txt"><body bgcolor=0><script>
+
+// Map editor for JSCC (Javascript C&C)
+// Jim Yang - mie_686@yahoo.com
+
+
+// ########################### GUI and MOUSE STUFF ################
+
+mouseX=0;mouseY=0;
+mouseMode=0;
+
+w=function(a){document.write(a);};
+o=function(a){return document.getElementById(a);};
+getm=function(e) {mouseX=e.pageX;mouseY=e.pageY;};
+
+document.onmousemove=getm;
+
+updateGrid=function(c,a){b=worldpass[c];worldpass[c]=b?0:1;a.src=b?"./i/trans2.gif":"./i/trans1.gif";};
+loadIn=function(){worldpass=[];eval(o('aout').value);drawGrid();};
+genMapCode=function(){o('aout').value="worldw="+worldw+";worldh="+worldh+";\nworldpass=["+worldpass+"];";};
+
+
+// -------------- world setup ------------
+worldw=31;worldh=31;
+worldpass=new Array(worldw*worldh);				// array for passable tiles
+
+
+drawGrid=function(){passgrid="";
+for(i=worldh;i-->0;){for(j=worldw;j-->0;){passgrid+="<img src=./i/trans";passgrid+=worldpass[(worldw*i+j)]?1:2;passgrid+=".gif style='position:absolute;z-index:8888;top:"+(24*i)+";left:"+(j*24)+"'";
+passgrid+=" onmouseover='window.status="+(worldw*i+j)+"' onclick='updateGrid("+(worldw*i+j)+",this)'>";}passgrid+="<br>";}o("gridHTML").innerHTML=passgrid;};
+
+w("<img class=world src=./i/map01.png>");
+w("<div class=world style='top:"+worldh*24+"'><textarea id=aout style='font: 12px;' rows='6' cols='80'></textarea>");
+w("<input type=button value=Load onclick='loadIn();drawGrid()'> ");
+w("<input type=button value=Generate onclick='genMapCode()'></div>");
+w("<div class=world id=gridHTML></div>");
+
+
+
+for(i=worldh;i-->0;){for(j=worldw;j-->0;){worldpass[j+worldw*i]=0;}}
+drawGrid();
+
+</script></body>
+</html>

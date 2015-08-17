@@ -1,0 +1,45 @@
+.df {	position:absolute; }
+
+.world {position:absolute;
+	z-index:0;
+	left:0px;
+	top:0px;
+}
+
+.bibs {position:absolute;
+	z-index:1;
+	display:none;
+}
+
+.op50 {	opacity:.6; }
+.sidebar{	z-index:1000; 
+		background:none;
+		position:absolute;
+		padding:0px;
+		margin:0px;
+}
+
+.as {
+	position:absolute;
+	padding:0px;
+	margin:0px;
+	display:none;
+	z-index:900;
+}
+
+.bs {
+	position:absolute;
+	padding:0px;
+	margin:0px;
+	display:none;
+	z-index:1;
+}
+
+.us {
+	position:absolute;
+	padding:0px;
+	margin:0px;
+	cursor:pointer;
+	display:none;
+	z-index:2;
+}
